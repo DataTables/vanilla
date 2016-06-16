@@ -261,20 +261,17 @@ if (!function_exists('assetVersion')) {
 
                 switch ($type) {
                     case 'plugins':
-                        $pluginInfo = Gdn::pluginManager()->getPluginInfo($key);
-                        $version = val('Version', $pluginInfo, $version);
-                        break;
                     case 'applications':
-                        $applicationInfo = Gdn::applicationManager()->getApplicationInfo(ucfirst($key));
-                        $version = val('Version', $applicationInfo, $version);
+                        $addon = Gdn::addonManager()->lookupAddon($key);
+                        if ($addon) {
+                            $version = $addon->getVersion();
+                        }
                         break;
                     case 'themes':
                         if ($themeVersion === null) {
-                            $themeInfo = Gdn::themeManager()->getThemeInfo(Theme());
-                            if ($themeInfo !== false) {
-                                $themeVersion = val('Version', $themeInfo, $version);
-                            } else {
-                                $themeVersion = $version;
+                            $theme = Gdn::addonManager()->lookupTheme(theme());
+                            if ($theme) {
+                                $themeVersion = $theme->getVersion();
                             }
                         }
                         $version = $themeVersion;
@@ -439,44 +436,6 @@ if (!function_exists('multiCheckPermission')) {
     function multiCheckPermission($PermissionName) {
         $Result = Gdn::session()->checkPermission($PermissionName, false);
         return $Result;
-    }
-}
-
-if (!function_exists('checkRequirements')) {
-    /**
-     * Check an addon's requirements.
-     *
-     * @param string $ItemName The name of the item checking requirements.
-     * @param array $RequiredItems An array of requirements.
-     * @param array $EnabledItems An array of currently enabled items to check against.
-     * @throws Gdn_UserException Throws an exception if there are missing requirements.
-     */
-    function checkRequirements($ItemName, $RequiredItems, $EnabledItems) {
-        // 1. Make sure that $RequiredItems are present
-        if (is_array($RequiredItems)) {
-            $MissingRequirements = array();
-
-            foreach ($RequiredItems as $RequiredItemName => $RequiredVersion) {
-                if (!array_key_exists($RequiredItemName, $EnabledItems)) {
-                    $MissingRequirements[] = "$RequiredItemName $RequiredVersion";
-                } elseif ($RequiredVersion && $RequiredVersion != '*') { // * means any version
-                    // If the item exists and is enabled, check the version
-                    $EnabledVersion = val('Version', val($RequiredItemName, $EnabledItems, array()), '');
-                    // Compare the versions.
-                    if (version_compare($EnabledVersion, $RequiredVersion, '<')) {
-                        $MissingRequirements[] = "$RequiredItemName $RequiredVersion";
-                    }
-                }
-            }
-            if (count($MissingRequirements) > 0) {
-                $Msg = sprintf(
-                    "%s is missing the following requirement(s): %s.",
-                    $ItemName,
-                    implode(', ', $MissingRequirements)
-                );
-                throw new Gdn_UserException($Msg);
-            }
-        }
     }
 }
 
@@ -779,11 +738,9 @@ if (!function_exists('deprecated')) {
     /**
      * Mark a function deprecated.
      *
-     * You can pass an optional date to the deprecated function to make errors more noisy in debug mode after 3 months.
-     *
      * @param string $oldName The name of the deprecated function.
      * @param string $newName The name of the new function that should be used instead.
-     * @param string $date A string in the form "yyyy-mm-dd" representing the date that the code was deprecated.
+     * @param string $date Deprecated. Ironic, no?
      */
     function deprecated($oldName, $newName = '', $date = '') {
         $message = "$oldName is deprecated.";
@@ -791,13 +748,6 @@ if (!function_exists('deprecated')) {
             $message .= " Use $newName instead.";
         }
 
-        if ($date && debug()) {
-            $expires = strtotime('+3 months', strtotime($date));
-            if ($expires <= time()) {
-                trigger_error($message, E_USER_ERROR);
-                return;
-            }
-        }
         trigger_error($message, E_USER_DEPRECATED);
     }
 }
@@ -1577,7 +1527,7 @@ if (!function_exists('getRecord')) {
                     $Discussion = $Model->getID($Row['DiscussionID']);
                     if ($Discussion) {
                         $Discussion->Url = DiscussionUrl($Discussion);
-                        $Row['ShareUrl'] = $Discussion->Url;
+                        $Row['ShareUrl'] = $Row['Url'];
                         $Row['Name'] = $Discussion->Name;
                         $Row['Discussion'] = (array)$Discussion;
                     }
@@ -1766,6 +1716,45 @@ if (!function_exists('inSubArray')) {
     }
 }
 
+if (!function_exists('ipDecode')) {
+    /**
+     * Decode a packed IP address to its human-readable form.
+     *
+     * @param string $packedIP A string representing a packed IP address.
+     * @return string|null A human-readable representation of the provided IP address.
+     */
+    function ipDecode($packedIP) {
+        if (filter_var($packedIP, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4|FILTER_FLAG_IPV6)) {
+            // If it's already a valid IP address, don't bother unpacking it.
+            $result = $packedIP;
+        } elseif ($IP = @inet_ntop($packedIP)) {
+            $result = $IP;
+        } else {
+            $result = null;
+        }
+
+        return $result;
+    }
+}
+
+if (!function_exists('ipEncode')) {
+    /**
+     * Encode a human-readable IP address as a packed string.
+     *
+     * @param string $IP A human-readable IP address.
+     * @return null|string A packed string representing a packed IP address.
+     */
+    function ipEncode($IP) {
+        $result = null;
+
+        if ($packedIP = @inet_pton($IP)) {
+            $result = $packedIP;
+        }
+
+        return $result;
+    }
+}
+
 if (!function_exists('isMobile')) {
     /**
      * Determine whether or not the site is in mobile mode.
@@ -1904,7 +1893,7 @@ if (!function_exists('isWritable')) {
         fclose($File);
 
         if (!$KeepPath) {
-            unlink($Path);
+            safeUnlink($Path);
         }
 
         return true;

@@ -149,7 +149,7 @@ class DashboardHooks implements Gdn_IPlugin {
     /**
      * @param $Sender
      */
-    public function base_getAppSettingsMenuItems_handler($Sender) {
+    public function base_earlyAppSettingsMenuItems_handler($Sender) {
         // SideMenuModule menu
         $Menu = &$Sender->EventArguments['SideMenu'];
         $Menu->addItem('Dashboard', t('Dashboard'), false, array('class' => 'Dashboard'));
@@ -262,6 +262,23 @@ class DashboardHooks implements Gdn_IPlugin {
                 }
                 Gdn::userModel()->Validation->reset();
             }
+        }
+    }
+
+    /**
+     * @param Gdn_Dispatcher $sender
+     */
+    public function gdn_dispatcher_sendHeaders_handler($sender) {
+        $csrfToken = Gdn::request()->post(
+            Gdn_Session::CSRF_NAME,
+            Gdn::request()->get(
+                Gdn_Session::CSRF_NAME,
+                Gdn::request()->getValueFrom(Gdn_Request::INPUT_SERVER, 'HTTP_X_CSRF_TOKEN')
+            )
+        );
+
+        if ($csrfToken && Gdn::session()->isValid() && !Gdn::session()->validateTransientKey($csrfToken)) {
+            safeHeader('X-CSRF-Token: '.Gdn::session()->transientKey());
         }
     }
 

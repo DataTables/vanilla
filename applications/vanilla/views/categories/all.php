@@ -13,18 +13,13 @@ $CatList = '';
 $DoHeadings = c('Vanilla.Categories.DoHeadings');
 $MaxDisplayDepth = c('Vanilla.Categories.MaxDisplayDepth') + $this->data('Category.Depth', 0);
 $ChildCategories = '';
-$this->EventArguments['NumRows'] = count($this->data('Categories'));
 
-//if (c('Vanilla.Categories.ShowTabs')) {
-////   $ViewLocation = Gdn::controller()->fetchViewLocation('helper_functions', 'Discussions', 'vanilla');
-////   include_once $ViewLocation;
-////   WriteFilterTabs($this);
-//   echo Gdn_Theme::Module('DiscussionFilterModule');
-//}
+$CategoryTree = $this->data('CategoryTree');
+$Categories = CategoryModel::flattenTree($CategoryTree);
+$this->EventArguments['NumRows'] = $Categories;
 
 echo '<ul class="DataList CategoryList'.($DoHeadings ? ' CategoryListWithHeadings' : '').'">';
-$Alt = FALSE;
-foreach ($this->data('Categories') as $CategoryRow) {
+foreach ($Categories as $CategoryRow) {
     $Category = (object)$CategoryRow;
 
     $this->EventArguments['CatList'] = &$CatList;
@@ -51,11 +46,8 @@ foreach ($this->data('Categories') as $CategoryRow) {
             $CatList .= '<li id="Category_'.$CategoryID.'" class="CategoryHeading '.$CssClass.'">
                <div class="ItemContent Category"><div class="Options">'.getOptions($Category, $this).'</div>'.Gdn_Format::text($Category->Name).'</div>
             </li>';
-            $Alt = FALSE;
         } else {
             $LastComment = UserBuilder($Category, 'Last');
-            $AltCss = $Alt ? ' Alt' : '';
-            $Alt = !$Alt;
             $CatList .= '<li id="Category_'.$CategoryID.'" class="'.$CssClass.'">
                <div class="ItemContent Category">'
                 .'<div class="Options">'

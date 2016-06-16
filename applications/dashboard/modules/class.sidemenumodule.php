@@ -256,19 +256,13 @@ if (!class_exists('SideMenuModule', false)) {
         }
 
         /**
-         *
+         * Render the menu.
          *
          * @param string $HighlightRoute
          * @return string
          * @throws Exception
          */
         public function toString($HighlightRoute = '') {
-            Gdn::controller()->EventArguments['SideMenu'] = $this;
-            if ($this->EventName) {
-                Gdn::controller()->fireEvent($this->EventName);
-            }
-
-
             if ($HighlightRoute == '') {
                 $HighlightRoute = $this->_HighlightRoute;
             }

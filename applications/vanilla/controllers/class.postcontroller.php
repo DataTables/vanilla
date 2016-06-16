@@ -251,7 +251,7 @@ class PostController extends VanillaController {
                         $DraftID = $this->DraftModel->save($FormValues);
                         $this->Form->setValidationResults($this->DraftModel->validationResults());
                     } else {
-                        $DiscussionID = $this->DiscussionModel->save($FormValues, $this->CommentModel);
+                        $DiscussionID = $this->DiscussionModel->save($FormValues);
                         $this->Form->setValidationResults($this->DiscussionModel->validationResults());
 
                         if ($DiscussionID > 0) {
@@ -806,7 +806,7 @@ class PostController extends VanillaController {
                 }
             }
         } elseif ($this->Request->isPostBack()) {
-            throw new Gdn_UserException('Invalid CSRF token.', 401);
+            throw new Gdn_UserException(t('Invalid CSRF token.', 'Invalid CSRF token. Please try again.'), 401);
         } else {
             // Load form
             if (isset($this->Comment)) {
@@ -899,7 +899,6 @@ class PostController extends VanillaController {
      */
     public function initialize() {
         parent::initialize();
-        $this->addModule('NewDiscussionModule');
 
         $this->CssClass = 'NoPanel';
     }

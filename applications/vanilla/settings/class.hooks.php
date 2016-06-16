@@ -355,18 +355,17 @@ class VanillaHooks implements Gdn_IPlugin {
     /**
      * Adds 'Discussion' item to menu.
      *
-     * 'Base_Render_Before' will trigger before every pageload across apps.
-     * If you abuse this hook, Tim with throw a Coke can at your head.
+     * 'base_render_before' will trigger before every pageload across apps.
+     * If you abuse this hook, Tim will throw a Coke can at your head.
      *
      * @since 2.0.0
      * @package Vanilla
      *
-     * @param object $Sender DashboardController.
+     * @param Gdn_Controller $sender The sending controller object.
      */
-    public function base_render_before($Sender) {
-        $Session = Gdn::session();
-        if ($Sender->Menu) {
-            $Sender->Menu->addLink('Discussions', t('Discussions'), '/discussions', false, array('Standard' => true));
+    public function base_render_before($sender) {
+        if ($sender->Menu) {
+            $sender->Menu->addLink('Discussions', t('Discussions'), '/discussions', false, ['Standard' => true]);
         }
     }
 
@@ -457,7 +456,7 @@ class VanillaHooks implements Gdn_IPlugin {
      */
     public function profileController_CustomNotificationPreferences_Handler($Sender) {
         if (!$Sender->data('NoEmail') && Gdn::session()->checkPermission('Garden.AdvancedNotifications.Allow')) {
-            include $Sender->fetchViewLocation('NotificationPreferences', 'Settings', 'Vanilla');
+            include $Sender->fetchViewLocation('notificationpreferences', 'vanillasettings', 'vanilla');
         }
     }
 
@@ -495,7 +494,7 @@ class VanillaHooks implements Gdn_IPlugin {
         if (Gdn::session()->isValid()) {
             $sender->addLink('favorites.bookmarks', array('text' => t('My Bookmarks'),
                 'url' => '/discussions/bookmarked', 'icon' => icon('star'),
-                'badge' => countString(Gdn::session()->User->CountBookmarks, url('/discussions/userbookmarkcount'))));
+                'badge' => countString(Gdn::session()->User->CountBookmarks, '/discussions/userbookmarkcount')));
             $sender->addLink('favorites.discussions', array('text' => t('My Discussions'),
                 'url' => '/discussions/mine', 'icon' => icon('discussion'),
                 'badge' => countString(Gdn::session()->User->CountDiscussions)));
@@ -705,14 +704,14 @@ class VanillaHooks implements Gdn_IPlugin {
     }
 
     /**
-     * Adds items to dashboard menu.
+     * Adds items to Dashboard menu.
      *
      * @since 2.0.0
      * @package Vanilla
      *
      * @param object $Sender DashboardController.
      */
-    public function base_getAppSettingsMenuItems_handler($Sender) {
+    public function base_earlyAppSettingsMenuItems_handler($Sender) {
         $Menu = &$Sender->EventArguments['SideMenu'];
         $Menu->addLink('Moderation', t('Flood Control'), 'vanilla/settings/floodcontrol', 'Garden.Settings.Manage', array('class' => 'nav-flood-control'));
         $Menu->addLink('Forum', t('Categories'), 'vanilla/settings/managecategories', 'Garden.Community.Manage', array('class' => 'nav-manage-categories'));

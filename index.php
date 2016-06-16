@@ -24,7 +24,7 @@ ob_start();
 
 // Define the constants we need to get going.
 
-define('DS', '/');
+define('DS', DIRECTORY_SEPARATOR);
 define('PATH_ROOT', getcwd());
 
 // Include the bootstrap to configure the framework.
@@ -32,12 +32,7 @@ define('PATH_ROOT', getcwd());
 require_once(PATH_ROOT.'/bootstrap.php');
 
 // Create and configure the dispatcher.
-
 $dispatcher = Gdn::dispatcher();
-
-$enabledApplications = Gdn::applicationManager()->enabledApplicationFolders();
-$dispatcher->enabledApplicationFolders($enabledApplications);
-$dispatcher->passProperty('EnabledApplications', $enabledApplications);
 
 // Process the request.
 $dispatcher->start();

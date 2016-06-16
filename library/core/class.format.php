@@ -1278,7 +1278,7 @@ class Gdn_Format {
         // https://www.youtube.com/watch?v=p5kcBxL7-qI
         // https://www.youtube.com/watch?v=bG6b3V2MNxQ#t=33
 
-        $YoutubeUrlMatch = '/https?:\/\/(?:(?:www.)|(?:m.))?(?:(?:youtube.com)|(?:youtu.be))\/(?:(?:playlist?)|(?:(?:watch\?v=)?(?P<videoId>[\w-]*)))(?:\?|\&)?(?:list=(?P<listId>[\w-]*))?(?:t=(?:(?P<minutes>\d)*m)?(?P<seconds>\d)*s)?(?:#t=(?P<start>\d*))?/i';
+        $YoutubeUrlMatch = '/https?:\/\/(?:(?:www.)|(?:m.))?(?:(?:youtube.com)|(?:youtu.be))\/(?:(?:playlist?)|(?:(?:watch\?v=)?(?P<videoId>[\w-]{11})))(?:\?|\&)?(?:list=(?P<listId>[\w-]*))?(?:t=(?:(?P<minutes>\d)*m)?(?P<seconds>\d)*s)?(?:#t=(?P<start>\d*))?/i';
         $VimeoUrlMatch = 'https?://(www\.)?vimeo\.com/(?:channels/[a-z0-9]+/)?(\d+)';
         $TwitterUrlMatch = 'https?://(?:www\.)?twitter\.com/(?:#!/)?(?:[^/]+)/status(?:es)?/([\d]+)';
         $VineUrlMatch = 'https?://(?:www\.)?vine.co/v/([\w]+)';
@@ -1582,7 +1582,7 @@ EOT;
      *
      * Supports most usernames by using double-quotes, for example:  @"a $pecial user's! name."
      * Without double-quotes, a mentioned username is terminated by any of the following characters:
-     * whitespace | . | , | ; | ? | ! | :
+     * whitespace | . | , | ; | ? | ! | : | '
      *
      * @since 2.3
      *
@@ -1645,7 +1645,7 @@ EOT;
 
             // Unquoted mention.
             if (!$mention && !empty($str)) {
-                $parts2 = preg_split('`([\s.,;?!:])`', $str, 2, PREG_SPLIT_DELIM_CAPTURE);
+                $parts2 = preg_split('`([\s.,;?!:\'])`', $str, 2, PREG_SPLIT_DELIM_CAPTURE);
                 $mention = $parts2[0];
                 $suffix = val(1, $parts2, '') . val(2, $parts2, '');
             }

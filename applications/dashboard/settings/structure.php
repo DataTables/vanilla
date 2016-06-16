@@ -88,7 +88,6 @@ $Construct
     ->column('DateFirstVisit', 'datetime', true)
     ->column('DateLastActive', 'datetime', true, 'index')
     ->column('LastIPAddress', 'ipaddress', true)
-    ->column('AllIPAddresses', 'varchar(100)', true)
     ->column('DateInserted', 'datetime', false, 'index')
     ->column('InsertIPAddress', 'ipaddress', true)
     ->column('DateUpdated', 'datetime', true)
@@ -141,6 +140,14 @@ if (!$SystemUserID) {
         Gdn::userModel()->getSystemUserID();
     }
 }
+
+// UserIP Table
+$Construct->table('UserIP')
+    ->column('UserID', 'int', false, 'primary')
+    ->column('IPAddress', 'varbinary(16)', false, 'primary')
+    ->column('DateInserted', 'datetime', false)
+    ->column('DateUpdated', 'datetime', false)
+    ->set($Explicit, $Drop);
 
 // UserRole Table
 $Construct->table('UserRole');
@@ -591,18 +598,17 @@ if ($Construct->tableExists('Tag') && $TagCategoryColumnExists) {
 
     $DupTags = Gdn::sql()
         ->select('Name, CategoryID')
-        ->select('TagID', 'min', 'TagID')
-        ->select('TagID', 'count', 'CountTags')
+        ->select('TagID', 'min', 'FirstTagID')
         ->from('Tag')
         ->groupBy('Name')
         ->groupBy('CategoryID')
-        ->having('CountTags >', 1)
+        ->having('count(TagID) >', 1)
         ->get()->resultArray();
 
     foreach ($DupTags as $Row) {
         $Name = $Row['Name'];
         $CategoryID = $Row['CategoryID'];
-        $TagID = $Row['TagID'];
+        $TagID = $Row['FirstTagID'];
         // Get the tags that need to be deleted.
         $DeleteTags = Gdn::sql()->getWhere('Tag', array('Name' => $Name, 'CategoryID' => $CategoryID, 'TagID <> ' => $TagID))->resultArray();
         foreach ($DeleteTags as $DRow) {
@@ -637,7 +643,7 @@ if (!$FullNameColumnExists) {
         ->put();
 
     $Construct->table('Tag')
-        ->column('FullName', 'varchar(255)', false, 'index')
+        ->column('FullName', 'varchar(100)', false, 'index')
         ->set();
 }
 
